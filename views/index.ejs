@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h5>Public Chat Room</h5>
+      <div class="chat-wrapper">
+        <ul class="chat-list" id="chatList">
+          <!-- <li class="chat-list-item">
+            <span class="chat-list-item-name"> Sam </span>
+            <span class="chat-list-item-message"> Message </span>
+          </li> -->
+          <hr />
+        </ul>
+        <div class="action">
+          <input class="action-message" type="text" id="message" />
+          <div class="action-btns">
+            <button class="btn" onclick="Send()">Send</button>
+            <button class="btn" id="login" onclick="Login()">Login</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal" id="modal">
+        <h5>Login</h5>
+        <div class="form">
+          <label for="name" class="form-label">Name</label>
+          <input class="form-input" type="text" id="name" />
+          <button class="form-btn" onclick="Save()">Save</button>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    const $modal = document.querySelector("#modal");
+    const socket = io();
+
+    window.onload = () => {
+      init();
+    };
+
+    // Init
+    const init = () => {
+      const name = localStorage.getItem("name");
+      document.querySelector("#name").value = name;
+
+      registerHandlerSocketServer();
+    };
+    // Event
+    function Send() {
+      const name = document.querySelector("#name").value;
+      if (!name) {
+        alert("Enter name");
+        return;
+      }
+      const message = document.querySelector("#message").value;
+
+      sendSocketServer(name, message);
+    }
+
+    // Socket
+    const sendSocketServer = (name, message) => {
+      socket.emit("broadcastMessage", { name, message });
+    };
+
+    const registerHandlerSocketServer = () => {
+      socket.on("handlerMessage", ({ name, message }) => {
+        // append listtime
+        const $chatList = document.querySelector("#chatList");
+        $chatList.appendChild(createListItem(name, message));
+        $chatList.appendChild(document.createElement("hr"));
+        $chatList.scrollBy(0, 100);
+      });
+    };
+
+    // Create DOM
+    const createListItem = (name, message) => {
+      const li = document.createElement("li");
+      li.classList = "chat-list-item";
+      li.appendChild(createSpanItem("chat-list-item-name", name + " - "));
+      li.appendChild(createSpanItem("chat-list-item-message", message));
+      return li;
+    };
+
+    const createSpanItem = (className, value) => {
+      const span = document.createElement("span");
+      span.classList = className;
+      span.innerHTML = value;
+      return span;
+    };
+
+    // Event
+    function Login() {
+      $modal.style.visibility = "visible";
+    }
+    function Save() {
+      const name = document.querySelector("#name").value;
+      localStorage.setItem("name", name);
+      $modal.style.visibility = "hidden";
+    }
+  </script>
+</html>
